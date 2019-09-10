@@ -1,0 +1,27 @@
+---
+
+- name: (service) Install packages
+  yum:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - 389-ds-base
+    - openldap-clients
+
+- name: (service) Configure directory server
+  shell: 'ds_newinst.pl {{ workspace }}/install.inf'
+
+- name: (service) Start service on boot
+  service:
+    name: dirsrv.target
+    enabled: yes
+
+- name: (service) Restart directory service
+  become: yes
+  service:
+    name: dirsrv.target
+    state: restarted
+
+- name: (service) Wait for service to start
+  wait_for:
+    port: '{{ ldap_port }}'

@@ -1,0 +1,33 @@
+---
+
+- name: (copy-files) Create workspace if it doesn't exist
+  file:
+    path: '{{ workspace }}'
+    state: directory
+    mode: 0755
+
+- name: (copy-files) Copy files
+  template:
+    src: '{{ item.file }}'
+    dest: '{{ workspace }}/{{ item.file }}'
+    mode: 0644
+  with_items:
+    - { file: ldif-sort.sh }
+
+- name: (copy-files) Copy files from templates
+  template:
+    src: '{{ item.file }}.j2'
+    dest: '{{ workspace }}/{{ item.file }}'
+    mode: 0644
+  with_items:
+    - { file: install.inf }
+    - { file: schema.ldif }
+    - { file: pwm-schema.ldif }
+    - { file: service-users.ldif }
+    - { file: test-users.ldif }
+
+- name: (copy-files) Copy backup script
+  template:
+    src: 'backup_ldap.sh.j2'
+    dest: '/usr/bin/backup_ldap'
+    mode: u+x

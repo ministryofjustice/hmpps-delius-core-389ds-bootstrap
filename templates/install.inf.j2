@@ -1,0 +1,15 @@
+[General]
+FullMachineName={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+SuiteSpotUserID=dirsrv
+SuiteSpotGroup=dirsrv
+
+[slapd]
+SlapdConfigForMC=0
+UseExistingMC=0
+ServerPort={{ ldap_port }}
+ServerIdentifier={{ hostname.stdout }}
+Suffix={{ base_root }}
+RootDN=cn=Directory Manager
+RootDNPwd={{ bind_password }}
+InstallLdifFile=suggest
+AddOrgEntries=No

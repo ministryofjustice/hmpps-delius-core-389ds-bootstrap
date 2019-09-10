@@ -1,0 +1,87 @@
+---
+
+- name: Roles/groups
+  block:
+    - name: (fetch-ldifs.roles) Download role catalogues
+      aws_s3:
+        bucket: '{{ s3_dependencies_bucket }}'
+        object: '/dependencies/delius-core/NDelius-{{ ndelius_version }}/scripts/User Data Store/{{ item.file }}'
+        dest: '{{ workspace }}/{{ item.file }}'
+        mode: get
+      with_items:
+        - { file: nd_role_catalogue.ldif }
+        - { file: nd_role_groups.ldif }
+
+    - name: (fetch-ldifs.roles) Replace base context in role catalogues
+      replace:
+        path: '{{ workspace }}/{{ item.file }}'
+        regexp: 'dc=pcms,dc=internal'
+        replace: '{{ base_root }}'
+      with_items:
+        - { file: nd_role_catalogue.ldif }
+        - { file: nd_role_groups.ldif }
+
+- name: Users
+  when: import_users_ldif != ''
+  block:
+    - name: (fetch-ldifs.users) Create directory
+      shell: 'mkdir -p $(dirname {{ workspace }}/{{ import_users_ldif }})'
+
+    - name: (fetch-ldifs.users) Download LDIF
+      aws_s3:
+        bucket: '{{ s3_backups_bucket }}'
+        object: '{{ import_users_ldif }}'
+        dest: '{{ workspace }}/{{ import_users_ldif }}'
+        mode: get
+
+    - name: (fetch-ldifs.users) Sort LDIF hierarchically
+      shell: >
+        cp {{ workspace }}/{{ import_users_ldif }} {{ workspace }}/{{ import_users_ldif }}.orig;
+        cat {{ workspace }}/{{ import_users_ldif }} | {{ workspace }}/ldif-sort.sh > {{ workspace }}/{{ import_users_ldif }}-sorted &&
+        mv {{ workspace }}/{{ import_users_ldif }}-sorted {{ workspace }}/{{ import_users_ldif }}
+
+    - name: (fetch-ldifs.users) Remove service users and roles, so we can re-add them with the desired details
+      replace:
+        path: '{{ workspace }}/{{ import_users_ldif }}'
+        regexp: '{{ item.regexp }}'
+        replace: '{{ item.replace }}'
+      with_items:
+        - { regexp: '(?i)^dn: cn=users[\w\W]+?\n\n', replace: '' }
+        - { regexp: '(?i)^dn: ou=NDProd[\w\W]+?\n\n', replace: '' }
+
+    - name: (fetch-ldifs.users) Remove original context entries
+      replace:
+        path: '{{ workspace }}/{{ import_users_ldif }}'
+        regexp: "(?i)^dn: {{ item }}[\w\W]+?\n\n"
+        replace: ''
+      with_items: "{{ import_users_ldif_base_users.split(',') }}"
+
+    - name: (fetch-ldifs.users) Replace context values
+      replace:
+        path: '{{ workspace }}/{{ import_users_ldif }}'
+        regexp: '{{ import_users_ldif_base_users }}'
+        replace: '{{ base_users }}'
+
+    - name: (fetch-ldifs.users) Remove Oracle-specific stuff
+      when: sanitize_oid_ldif
+      replace:
+        path: '{{ workspace }}/{{ import_users_ldif }}'
+        regexp: '{{ item.regexp }}'
+        replace: '{{ item.replace }}'
+      with_items:
+        # Unwrap lines to make it easier when searching:
+        - { regexp: '\n ([^\n])', replace: '\1' }
+        # Remove oracle default users:
+        - { regexp: '(?i)^dn:.*cn=orcladmin,[\w\W]+?\n\n', replace: '' }
+        - { regexp: '(?i)^dn:.*cn=public,[\w\W]+?\n\n', replace: '' }
+        # Replace oracle start/end date attributes with out own:
+        - { regexp: '(?i)^orclActiveStartDate: ', replace: 'startDate: ' }
+        - { regexp: '(?i)^orclActiveEndDate: ', replace: 'endDate: ' }
+        # Remove oracle objectclasses:
+        - { regexp: '(?i)^objectclass: orcl.+?\n', replace: '' }
+        # Remove oracle attributes:
+        - { regexp: '(?i)^orcl.+?\n', replace: '' }
+        - { regexp: '(?i)^authpassword.+?\n', replace: '' }
+        - { regexp: '(?i)^krbprincipalname.+?\n', replace: '' }
+        # Fix to handle incorrect context set on aliasedobjectname attributes:
+        - { regexp: '(?i)(aliasedobjectname:.+?,cn=ndRoleCatalogue,).+?\n', replace: '\1{{ base_users }}\n' }
