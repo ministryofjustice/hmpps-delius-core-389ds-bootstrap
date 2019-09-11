@@ -9,7 +9,7 @@
     - openldap-clients
 
 - name: (service) Configure directory server
-  shell: 'ds_newinst.pl {{ workspace }}/install.inf'
+  shell: 'setup-ds.pl -s -f {{ workspace }}/install.inf'
 
 - name: (service) Start service on boot
   service:
