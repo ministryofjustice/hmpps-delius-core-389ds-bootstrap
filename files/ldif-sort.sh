@@ -20,10 +20,7 @@ sed $'s/\r$//' \
 | awk 'BEGIN{RS="\n\n" ; ORS="\2";}{ print }' \
 | awk 'BEGIN{RS="\n" ; ORS="\1";}{ print }' \
 | awk 'BEGIN{RS="\2" ; ORS="\n";}{ print }' \
-| awk '{
-    dn=sub(/dn:[^:]+?:/, "&")
-    print gsub(/,/, "", dn) " " $1
-}' \
+| awk -F ':' '{ orig = $0; print gsub(/,/, "", $2) " " orig }' \
 | sort -n \
 | sed 's/[^ ]* //' \
 | awk '{$1=$1}1' FS='\1' OFS='\n' ORS='\n\n'
