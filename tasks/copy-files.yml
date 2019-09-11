@@ -1,30 +1,25 @@
 ---
 
-- name: (copy-files) Create workspace if it doesn't exist
-  file:
-    path: '{{ workspace }}'
-    state: directory
-    mode: 0755
-
 - name: (copy-files) Copy files
-  template:
+  copy:
     src: '{{ item.file }}'
     dest: '{{ workspace }}/{{ item.file }}'
-    mode: 0644
+    mode: '{{ item.mode }}'
   with_items:
-    - { file: ldif-sort.sh }
+    - { file: ldif-sort.sh, mode: u+x }
 
 - name: (copy-files) Copy files from templates
   template:
-    src: '{{ item.file }}.j2'
-    dest: '{{ workspace }}/{{ item.file }}'
+    src: '{{ item }}.j2'
+    dest: '{{ workspace }}/{{ item }}'
     mode: 0644
   with_items:
-    - { file: install.inf }
-    - { file: schema.ldif }
-    - { file: pwm-schema.ldif }
-    - { file: service-users.ldif }
-    - { file: test-users.ldif }
+    - install.inf
+    - schema.ldif
+    - pwm-schema.ldif
+    - context.ldif
+    - service-users.ldif
+    - test-users.ldif
 
 - name: (copy-files) Copy backup script
   template:

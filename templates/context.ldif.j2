@@ -1,3 +1,3 @@
 dn: {{ base_users }}
-objectclass: javaContainer
+objectclass: {{ base_users | regex_replace('^(.+?)=.*', '\\1') | replace('ou', 'organizationalUnit') | replace('cn', 'javaContainer') }}
 objectclass: top
