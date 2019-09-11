@@ -46,8 +46,12 @@
         regexp: '{{ item.regexp }}'
         replace: '{{ item.replace }}'
       with_items:
-        - { regexp: '(?i)^dn: cn=users[\w\W]+?\n\n', replace: '' }
-        - { regexp: '(?i)^dn: ou=NDProd[\w\W]+?\n\n', replace: '' }
+        - { regexp: '(?i)^dn:.*eisusers[\w\W]+?\n\n', replace: '' }
+        - { regexp: '(?i)^dn:.*cn=SPG,[\w\W]+?\n\n', replace: '' }
+        - { regexp: '(?i)^dn:.*cn=ALF,[\w\W]+?\n\n', replace: '' }
+        - { regexp: '(?i)^dn:.*cn=c\d{2},[\w\W]+?\n\n', replace: '' }
+        - { regexp: '(?i)^dn:.*cn=ndrolecatalogue,[\w\W]+?\n\n', replace: '' }
+        - { regexp: '(?i)^dn:.*cn=ndrolegroups,[\w\W]+?\n\n', replace: '' }
 
     - name: (fetch-ldifs.users) Remove original context entries
       replace:
