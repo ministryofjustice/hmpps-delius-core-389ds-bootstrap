@@ -58,7 +58,6 @@
   file:
     path: '{{ workspace }}'
     state: absent
-    recurse: yes
 
 - name: (main) set tag to indicate deployed ndelius_version
   ec2_tag:
