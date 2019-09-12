@@ -6,8 +6,6 @@
 
 - name: (facts) Set facts
   set_fact:
-    dirsrv_user: "{{ dirsrv_user | default('dirsrv') }}"
-    dirsrv_group: "{{ dirsrv_group | default('dirsrv') }}"
     bind_user: "{{ bind_user | default('cn=Directory Manager') }}"
     base_service_users: 'cn=EISUsers,{{ base_users }}'
     base_roles: 'cn=ndRoleCatalogue,{{ base_users }}'

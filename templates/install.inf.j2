@@ -1,7 +1,7 @@
 [General]
 FullMachineName={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
-SuiteSpotUserID=dirsrv
-SuiteSpotGroup=dirsrv
+SuiteSpotUserID={{ dirsrv_user | default('dirsrv') }}
+SuiteSpotGroup={{ dirsrv_group | default('dirsrv') }}
 
 [slapd]
 SlapdConfigForMC=0
